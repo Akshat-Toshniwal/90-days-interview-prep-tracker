@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>~/90-day-interview-prep — main</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0D16; --bg-side: #0D101C; --bg-elevated: #0F1424; --bg-card: #10162A; --bg-hover: #161D33;
+    --border: #1E2740; --border-soft: #171E36;
+    --text: #C7D0EE; --text-bright: #EDF1FF; --text-dim: #6B7694; --text-faint: #454F6E;
+    --comment: #838FB8;
+    --blue: #4C8DFF; --blue-soft: #1B2A4D;
+    --purple: #A78BFA; --orange: #F0A153; --green: #3FB950; --green-soft: #12321C;
+    --red: #FF5F56; --yellow: #FFBD2E;
+    box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 90px; }
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+  *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; color: var(--text);
+    font-family: "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13.5px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(76,141,255,.10), transparent 40%),
+      radial-gradient(circle at 85% 12%, rgba(167,139,250,.09), transparent 42%),
+      radial-gradient(circle at 50% 95%, rgba(63,185,80,.07), transparent 45%),
+      linear-gradient(160deg, #060810 0%, #0A0E1C 55%, #070911 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 26px; overflow: hidden;
+  }
+  .window {
+    width: 100%; max-width: 1560px; height: calc(100vh - 52px); height: calc(100dvh - 52px);
+    background: var(--bg); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 50px 100px -30px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.05), inset 0 1px 0 rgba(255,255,255,.03);
+    display: flex; flex-direction: column;
+  }
+  @media (max-width: 720px) {
+    body { padding: 0; }
+    .window { max-width: none; height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; }
+  }
+  ::selection { background: #274674; color: #fff; }
+  button { font-family: inherit; }
+
+  /* Title bar */
+  .titlebar {
+    display: flex; align-items: center; padding: 10px 16px; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border); flex: none;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+  .dots { display: flex; gap: 7px; width: 90px; flex: none; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: var(--red); } .dot.y { background: var(--yellow); } .dot.g { background: #27C93F; }
+  .titlebar-title { flex: 1; text-align: center; color: var(--comment); font-size: 12.5px; }
+
+  .shell { display: flex; flex: 1; min-height: 0; }
+
+  /* Sidebar */
+  .sidebar { width: 300px; flex: none; background: var(--bg-side); border-right: 1px solid var(--border); overflow-y: auto; padding: 14px 0 40px; }
+  .sidebar-title { color: var(--text-faint); font-size: 11px; letter-spacing: .1em; padding: 4px 18px 10px; }
+  .node { user-select: none; }
+  .node-row {
+    display: flex; align-items: center; gap: 7px; padding: 6px 14px; cursor: pointer; border-left: 2px solid transparent;
+    font-size: 13px; white-space: nowrap; overflow: hidden;
+  }
+  .node-row:hover { background: var(--bg-hover); }
+  .node-row.active { background: var(--bg-hover); border-left-color: var(--blue); }
+  .node-row.pinned { font-weight: 700; color: var(--text-bright); }
+  .caret { width: 12px; flex: none; color: var(--text-faint); font-size: 9px; transition: transform .15s; text-align: center; }
+  .caret.open { transform: rotate(90deg); }
+  .caret.leaf { visibility: hidden; }
+  .node-label { overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .node-label .dim { color: var(--comment); font-style: italic; }
+  .node-pct { margin-left: auto; flex: none; color: var(--text-faint); font-size: 11px; padding-left: 8px; }
+  .node-icon { width: 15px; flex: none; text-align: center; font-size: 12px; }
+  .icon-check { color: var(--green); } .icon-ring { color: var(--text-faint); }
+  .indent-1 { padding-left: 30px; } .indent-2 { padding-left: 46px; } .indent-3 { padding-left: 62px; }
+  .children { display: none; } .children.open { display: block; }
+  .sidebar-sep { height: 1px; background: var(--border-soft); margin: 10px 14px; }
+
+  /* Main */
+  .mainpane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .tabbar { display: flex; background: var(--bg-elevated); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tab { display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 12.5px; color: var(--text-dim); border-right: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
+  .tab.active { color: var(--text-bright); background: var(--bg); border-top: 2px solid var(--blue); padding-top: 8px; }
+  .tab .x { color: var(--text-faint); margin-left: 4px; }
+  .tab .x:hover { color: var(--text); }
+  .breadcrumb { padding: 9px 22px; font-size: 12px; color: var(--text-dim); border-bottom: 1px solid var(--border-soft); }
+  .breadcrumb .cur { color: var(--text); }
+  .content { flex: 1; overflow-y: auto; padding: 34px 40px 80px; }
+  @media (max-width: 900px) { .sidebar { position: fixed; left: 0; top: 41px; bottom: 0; z-index: 30; transform: translateX(-100%); transition: transform .2s; }
+    .sidebar.open { transform: translateX(0); } .content { padding: 24px 18px 80px; } }
+  .menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--text-dim); border-radius: 5px; padding: 4px 9px; font-size: 12px; margin-right: 10px; }
+  @media (max-width: 900px) { .menu-btn { display: inline-block; } }
+
+  /* Doc comment header */
+  .doccomment { color: var(--comment); font-style: italic; margin: 0 0 26px; font-size: 13.5px; line-height: 1.8; }
+  .doccomment .kw { color: var(--purple); font-weight: 700; font-style: normal; }
+  .doccomment strong { color: var(--text-bright); font-style: normal; }
+
+  /* Continue card */
+  .continue-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--green);
+    border-radius: 8px; padding: 18px 22px; margin-bottom: 24px;
+  }
+  .continue-card .label { color: var(--text-dim); font-size: 12px; margin-bottom: 4px; }
+  .continue-card .title { color: var(--text-bright); font-size: 16px; font-weight: 700; }
+  .btn-open {
+    background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 18px;
+    font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .btn-open:hover { background: #5C99FF; }
+
+  /* Stat cards */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 30px; }
+  @media (max-width: 800px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+  .stat-num { font-size: 26px; font-weight: 800; color: var(--text-bright); }
+  .stat-num .small { font-size: 14px; color: var(--text-dim); font-weight: 600; }
+  .stat-label { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
+
+  h3.section-h { color: var(--text-bright); font-size: 14px; margin: 30px 0 12px; }
+  h3.section-h .sl { color: var(--comment); font-style: italic; }
+
+  /* commit graph */
+  .grid90 { display: grid; grid-template-columns: repeat(30, 1fr); gap: 4px; max-width: 640px; }
+  .sq { width: 100%; aspect-ratio: 1; border-radius: 3px; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; }
+  .sq[data-lvl="1"] { background: #12321C; border-color: #1B4326; }
+  .sq[data-lvl="2"] { background: #1D6B33; border-color: #237A3B; }
+  .sq[data-lvl="3"] { background: var(--green); border-color: var(--green); }
+  .grid-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--text-faint); font-size: 11.5px; }
+  .legend-sq { width: 11px; height: 11px; border-radius: 2px; display: inline-block; border: 1px solid var(--border); }
+
+  /* tracks */
+  .track-row { display: flex; align-items: center; gap: 14px; padding: 9px 0; }
+  .track-name { width: 230px; flex: none; font-size: 12.5px; color: var(--text); }
+  .track-bar { flex: 1; height: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+  .track-fill { height: 100%; border-radius: 5px; }
+  .track-count { width: 70px; flex: none; text-align: right; color: var(--text-dim); font-size: 12px; }
+
+  .quote-banner {
+    color: var(--comment); font-style: italic; font-size: 12.5px; margin: 0 0 22px;
+    padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 6px;
+  }
+  .quote-banner span { color: var(--text); font-style: normal; }
+  .continue-mindset { margin-top: 8px; font-size: 12px; color: var(--comment); font-style: italic; max-width: 52ch; }
+
+  .datectl { float: right; color: var(--text-dim); font-size: 11px; font-weight: 400; display: inline-flex; align-items: center; gap: 6px; }
+  .datectl input[type="date"] {
+    background: var(--bg-card); border: 1px solid var(--border); color: var(--text); border-radius: 4px;
+    font-family: inherit; font-size: 11px; padding: 3px 6px; color-scheme: dark;
+  }
+  .sq.today { box-shadow: 0 0 0 2px var(--blue); }
+
+  .consist-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12.5px; }
+  .consist-table th { text-align: left; color: var(--text-faint); font-weight: 600; font-size: 11px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .consist-table td { padding: 9px 10px; border-bottom: 1px solid var(--border-soft); color: var(--text); }
+  .consist-table tr:hover td { background: var(--bg-hover); }
+  .consist-table tr.current-week td { background: var(--blue-soft); }
+  .st-pending { color: var(--text-faint); }
+  .st-done { color: var(--green); }
+  .st-progress { color: var(--orange); }
+
+  /* day view */
+  .day-comment { color: var(--comment); font-style: italic; font-size: 13px; margin: 4px 0 16px; padding-left: 12px; border-left: 2px solid var(--border); }
+  .mindset-box {
+    background: var(--blue-soft); border: 1px solid #2A4A85; border-left: 3px solid var(--blue);
+    border-radius: 8px; padding: 13px 16px; margin: 0 0 24px; font-size: 13px; color: var(--text-bright);
+  }
+  .mindset-label { color: var(--blue); font-weight: 700; }
+  .task-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-top: 1px dashed var(--border-soft); }
+  .task-row:first-child { border-top: none; }
+  .task-check { display: none; }
+  .task-badge {
+    width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--text-faint); flex: none; margin-top: 2px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: transparent; cursor: pointer;
+  }
+  .task-check:checked + .task-label .task-badge { background: var(--green); border-color: var(--green); color: #08130A; }
+  .task-check:checked + .task-label .task-badge::after { content: "✓"; }
+  .task-check:checked + .task-label .task-text { color: var(--text-dim); text-decoration: line-through; }
+  .task-label { display: flex; gap: 10px; cursor: pointer; }
+  .task-text .kw { color: var(--purple); } .task-text .str { color: var(--orange); }
+  .daynav { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
+  .daynav a { color: var(--blue); font-size: 12.5px; cursor: pointer; }
+  .daynav a:hover { text-decoration: underline; }
+  .daynav .disabled { color: var(--text-faint); pointer-events: none; }
+
+  /* shell (phone) */
+  .shellbox { background: #060810; border: 1px solid var(--border); border-radius: 8px; padding: 6px 18px; }
+  .sh-row { display: flex; gap: 10px; padding: 10px 0; border-top: 1px dashed var(--border-soft); align-items: flex-start; }
+  .sh-row:first-child { border-top: none; }
+  .sh-prompt { color: var(--green); flex: none; }
+  .sh-comment { color: var(--text-faint); }
+
+  /* log */
+  .log-row { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-soft); font-size: 13px; }
+  .log-row:first-child { border-top: none; }
+  .log-ts { color: var(--text-faint); flex: none; font-size: 11.5px; padding-top: 2px; }
+  .log-tag { color: var(--purple); flex: none; font-weight: 700; font-size: 11px; padding-top: 2px; }
+
+  .md-row { display: flex; gap: 10px; padding: 8px 0; border-top: 1px dashed var(--border-soft); }
+  .md-row:first-child { border-top: none; }
+  .md-mark { color: var(--green); flex: none; }
+  .md-link { color: var(--blue); }
+
+  .resetbar { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
+  .reset-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); border-radius: 5px; padding: 7px 12px; font-size: 12px; cursor: pointer; }
+  .reset-btn:hover { color: var(--text); border-color: var(--red); }
+
+  /* ---------- animations ---------- */
+  .content { animation: fadeIn .28s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .node-row { transition: background .15s ease, border-color .15s ease; }
+  .btn-open { transition: transform .15s ease, background .15s ease; }
+  .btn-open:hover { transform: translateY(-1px) scale(1.03); }
+  .btn-open:active { transform: translateY(0) scale(.98); }
+  .stat-card { transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+  .stat-card:hover { transform: translateY(-2px); border-color: var(--blue); box-shadow: 0 8px 20px -12px rgba(76,141,255,.35); }
+  .stat-card.pulse { animation: pulseCard .5s ease; }
+  @keyframes pulseCard { 0% { box-shadow: 0 0 0 0 rgba(76,141,255,.55); } 100% { box-shadow: 0 0 0 14px rgba(76,141,255,0); } }
+  .stat-num { transition: color .2s ease; }
+
+  .continue-card { transition: transform .18s ease; }
+  .continue-card:hover { transform: translateY(-1px); }
+
+  .track-fill { transition: width .6s cubic-bezier(.22,1,.36,1); }
+  .buildbar-fill, .rail-fill { transition: width .6s cubic-bezier(.22,1,.36,1); }
+
+  .sq { transition: transform .15s ease, background .3s ease, border-color .3s ease; }
+  .sq:hover { transform: scale(1.25); }
+  .sq.pop { animation: sqPop .35s ease; }
+  @keyframes sqPop { 0% { transform: scale(1); } 40% { transform: scale(1.5); } 100% { transform: scale(1); } }
+
+  .task-badge { transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+  .task-check:checked + .task-label .task-badge { animation: badgePop .28s ease; }
+  @keyframes badgePop { 0% { transform: scale(.6); } 55% { transform: scale(1.3); } 100% { transform: scale(1); } }
+  .task-row { transition: opacity .2s ease; }
+
+  .caret { transition: transform .15s ease, color .15s ease; }
+
+  /* ---------- toast ---------- */
+  #toastLayer {
+    position: fixed; right: 18px; bottom: 18px; z-index: 100;
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+    pointer-events: none; max-width: min(340px, calc(100vw - 32px));
+  }
+  .toast {
+    pointer-events: auto; background: var(--bg-elevated); border: 1px solid var(--border);
+    border-left: 3px solid var(--green); border-radius: 8px; padding: 12px 16px;
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,.6); font-size: 13px; color: var(--text-bright);
+    display: flex; align-items: center; gap: 10px; animation: toastIn .28s cubic-bezier(.22,1,.36,1);
+  }
+  .toast.out { animation: toastOut .25s ease forwards; }
+  .toast .ic { font-size: 16px; }
+  .toast .sub { display: block; color: var(--text-dim); font-size: 11.5px; margin-top: 2px; }
+  .toast.week { border-left-color: var(--blue); }
+  .toast.month { border-left-color: var(--purple); }
+  .toast.streak { border-left-color: var(--orange); }
+  .toast.complete { border-left-color: var(--green); background: var(--green-soft); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(24px) scale(.96); } to { opacity: 1; transform: translateX(0) scale(1); } }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(24px) scale(.96); } }
+
+  /* ---------- confetti ---------- */
+  #confettiLayer { position: fixed; inset: 0; pointer-events: none; z-index: 99; overflow: hidden; }
+  .confetti-piece {
+    position: absolute; top: -12px; width: 8px; height: 8px; opacity: .9;
+    animation-name: confettiFall; animation-timing-function: cubic-bezier(.25,.46,.45,.94); animation-fill-mode: forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: .95; }
+    100% { transform: translateY(100vh) rotate(540deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+<div class="titlebar">
+  <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+  <div class="titlebar-title">~/90-day-interview-prep — main</div>
+</div>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-title">EXPLORER</div>
+    <div id="tree"></div>
+  </nav>
+
+  <div class="mainpane">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <button class="menu-btn" id="menuBtn" style="margin:10px 0 0 16px;">☰ files</button>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+</div>
+
+<div id="toastLayer"></div>
+<div id="confettiLayer"></div>
+
+<script>
+(function(){
+  // ---------------- celebration fx ----------------
+  function toast(msg, sub, type, icon){
+    const layer = document.getElementById('toastLayer');
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' '+type : '');
+    el.innerHTML = `<span class="ic">${icon||'✅'}</span><span>${msg}${sub?`<span class="sub">${sub}</span>`:''}</span>`;
+    layer.appendChild(el);
+    setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 260); }, 3400);
+  }
+
+  function confetti(big){
+    const layer = document.getElementById('confettiLayer');
+    const colors = ['#4C8DFF','#A78BFA','#F0A153','#3FB950','#FF5F56','#FFBD2E'];
+    const count = big ? 90 : 34;
+    for (let i=0;i<count;i++){
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      const left = Math.random()*100;
+      const size = 6 + Math.random()*6;
+      const dur = 1.6 + Math.random()*1.6;
+      const delay = Math.random()*.4;
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      const round = Math.random() > .5;
+      p.style.left = left+'vw';
+      p.style.width = size+'px'; p.style.height = size+'px';
+      p.style.background = color;
+      p.style.borderRadius = round ? '50%' : '2px';
+      p.style.animationDuration = dur+'s';
+      p.style.animationDelay = delay+'s';
+      layer.appendChild(p);
+      setTimeout(()=>p.remove(), (dur+delay)*1000 + 200);
+    }
+  }
+
+  function popSquareFor(dayNum){
+    const grid = document.getElementById('grid90');
+    if (!grid) return;
+    const idx = allDayNums.indexOf(dayNum);
+    const sq = grid.children[idx];
+    if (sq) { sq.classList.add('pop'); setTimeout(()=>sq.classList.remove('pop'), 400); }
+  }
+  function pulseStats(){
+    document.querySelectorAll('.stat-card').forEach(card=>{
+      card.classList.add('pulse'); setTimeout(()=>card.classList.remove('pulse'), 550);
+    });
+  }
+
+  // ---------------- data ----------------
+  const camps = [
+    {name:"Foundations", theme:"Big-O and arrays — the ruler and the raw material every later topic uses.", days:[
+      [1,"Orientation & Big-O","This is the ruler you'll use to judge every solution for the next 90 days — learn it before writing a single line.",["Time complexity of 5 snippets","Two Sum (brute force)","Two Sum (optimal)"]],
+      [2,"Arrays I — traversal & in-place ops","Big-O now meets real code: watch your first loops turn into O(n) and O(n\u00b2).",["Reverse Array","Remove Duplicates from Sorted Array","Move Zeroes"]],
+      [3,"Arrays II — Prefix sums","Traversal from yesterday becomes a tool for answering range questions instantly.",["Running Sum of 1d Array","Find Pivot Index","Range Sum Query - Immutable"]],
+      [4,"Arrays III — Kadane's Algorithm","The running-sum idea evolves into tracking a running maximum instead.",["Maximum Subarray","Best Time to Buy and Sell Stock","Maximum Product Subarray"]],
+      [5,"Arrays IV — Rotation & index tricks","Index arithmetic from Day 2 gets pushed further with cyclic shifts.",["Rotate Array","Next Permutation","Set Matrix Zeroes"]],
+      [6,"Practice day","Redo this week's hardest problem from scratch, untimed, then timed.",["3 medium Array-tag problems of your choice"]],
+      [7,"Rest & light review","No new problems. Re-read your notes, watch one recap video. This protects the streak.",["Review only — no coding"]]
+    ]},
+    {name:"Strings & Math", theme:"Strings are arrays of characters; math and bits give you the tools DP and graphs need later.", days:[
+      [8,"Strings I — basics","Everything you know about arrays transfers directly — a string is just an array of characters.",["Valid Palindrome","Reverse String","Reverse Words in a String"]],
+      [9,"Strings II — two pointers","The two-pointer pattern from array rotations now works on strings too.",["Valid Anagram","Longest Common Prefix","Group Anagrams"]],
+      [10,"Strings III — sliding window intro","Prefix-sum windowing from Day 3 becomes a window that slides over substrings.",["Longest Substring Without Repeating Characters","Longest Repeating Character Replacement","Minimum Window Substring (attempt)"]],
+      [11,"Math for DSA","GCD, primes and modular arithmetic — quiet tools that DP and graph weights need later.",["Sieve of Eratosthenes","Count Primes","GCD of Strings"]],
+      [12,"Bit Manipulation","A different lens on the same numbers you've been sorting and summing all week.",["Single Number","Number of 1 Bits","Counting Bits"]],
+      [13,"Practice day","Mix strings and math in one sitting to see they're the same muscle.",["3 medium String/Math problems"]],
+      [14,"Rest + weekly mock","Timed: 1 easy + 1 medium pulled from weeks 1–2.",["Timed mock, 30 min"]]
+    ]},
+    {name:"Recursion & Backtracking", theme:"Recursion is the real foundation — trees, graphs and DP are all recursion wearing different clothes.", days:[
+      [15,"Recursion I — base case & call stack","Every tree, graph and DP topic ahead is recursion in disguise. This is the most important day in the whole plan.",["Fibonacci Number","Pow(x, n)","Sum of Digits (recursive)"]],
+      [16,"Recursion II — on arrays & strings","Apply yesterday's base-case thinking to structures you already know.",["Reverse a String (recursive)","Check Palindrome (recursive)","Merge Two Sorted Lists (trace by hand)"]],
+      [17,"Backtracking I — subsets & combinations","Recursion + making a choice + undoing it = backtracking.",["Subsets","Combinations","Permutations"]],
+      [18,"Backtracking II — constraints","Add a rule to filter which choices are even allowed.",["Combination Sum","Letter Combinations of a Phone Number","Palindrome Partitioning"]],
+      [19,"Backtracking III — classic puzzles","The same 3-step pattern (choose, explore, un-choose) solves famous puzzles.",["N-Queens","Word Search","Sudoku Solver (attempt)"]],
+      [20,"Practice day","Draw the recursion tree on paper for every problem before coding it.",["3 medium Backtracking problems"]],
+      [21,"Rest & active recall","From memory, redraw the recursion tree for 2 problems you already solved.",["Recall only — no new problems"]]
+    ]},
+    {name:"Searching & Sorting", theme:"Binary search is 'divide' from recursion; sorting shows you what library functions hide.", days:[
+      [22,"Binary Search I","Search-space reduction is the same 'divide' idea recursion taught you.",["Binary Search","Search Insert Position","First and Last Position of Element in Sorted Array"]],
+      [23,"Binary Search II — on the answer","Binary search doesn't need a sorted array — it needs a yes/no question that flips once.",["Search in Rotated Sorted Array","Find Minimum in Rotated Sorted Array","Koko Eating Bananas"]],
+      [24,"Sorting I — by hand","Implement bubble/insertion sort once so you know what .sort() is hiding.",["Sort Colors","Merge Sorted Array","Implement Insertion Sort"]],
+      [25,"Sorting II — Merge & Quick Sort","Merge sort's divide-and-merge is recursion again, at work on a full array.",["Sort an Array","Count Inversions (GfG)","Kth Largest Element in an Array"]],
+      [26,"Sorting III — custom comparators","Control the order sorting uses, not just the direction.",["Merge Intervals","Largest Number","Meeting Rooms II (concept)"]],
+      [27,"Practice day","Mix search and sort problems in one sitting.",["3 medium Search/Sort problems"]],
+      [28,"Rest + mock","Timed: 2 mediums from weeks 3–4.",["Timed mock, 45 min"]]
+    ]},
+    {name:"Two Pointers, Windows & Hashing", theme:"Naming the patterns you've already used twice, then adding O(1) lookup to remove nested loops.", days:[
+      [29,"Two Pointers — the pattern, named","Formalizing the pointer trick you first used on Day 9.",["3Sum","Container With Most Water","Trapping Rain Water"]],
+      [30,"Sliding Window — the pattern, named","Formalizing the window you first used on Day 10.",["Maximum Sum Subarray of Size K (GfG)","Longest Substring with At Most K Distinct Characters","Sliding Window Maximum"]],
+      [31,"Hashing I","A hashmap trades memory for O(1) lookup, erasing the nested loops from your early brute forces.",["Two Sum (redo with a hashmap)","Contains Duplicate","Majority Element"]],
+      [32,"Hashing II — frequency counting","Count first, decide second — a pattern that reappears in graphs and DP.",["Top K Frequent Elements","Subarray Sum Equals K","Longest Consecutive Sequence"]],
+      [33,"Combine patterns","Two pointers plus hashing solve problems neither could alone.",["4Sum","Isomorphic Strings","Longest Substring Without Repeating (redo, faster)"]],
+      [34,"Practice day","Pick problems and consciously choose which pattern fits before coding.",["3 medium mixed problems"]],
+      [35,"Rest + mock","Timed: 2 mediums from this week.",["Timed mock, 45 min"]]
+    ]},
+    {name:"Linked Lists", theme:"Pointers replace array indices — the same logic wearing a new structure.", days:[
+      [36,"Linked List I — traversal & edits","Same logic as arrays, but you follow pointers instead of counting indices.",["Reverse Linked List","Middle of the Linked List","Merge Two Sorted Lists"]],
+      [37,"Linked List II — fast & slow pointers","The two-pointer pattern from Day 29 works on links too.",["Linked List Cycle","Linked List Cycle II","Palindrome Linked List"]],
+      [38,"Linked List III — reordering","Combine reversal and merging skills from the last two days.",["Reorder List","Add Two Numbers","Merge K Sorted Lists (attempt)"]],
+      [39,"Linked List IV — doubly linked & deep copy","A harder pointer-juggling exercise before you move on.",["Copy List with Random Pointer","Remove Nth Node From End of List","Flatten a Multilevel Doubly Linked List"]],
+      [40,"Practice day","Trace every pointer change on paper before typing.",["3 medium Linked List problems"]],
+      [41,"Weak-area buffer","Revisit your 3 lowest-confidence topics so far using your tracker.",["Your choice — fill the gaps"]],
+      [42,"Rest + mock","Timed, mixed topics from weeks 5–6.",["Timed mock, 60 min"]]
+    ]},
+    {name:"Stacks & Queues", theme:"LIFO is the recursion call-stack made visible; queues generalize into trees next week.", days:[
+      [43,"Stack I — fundamentals","A stack is your Day 15 call stack, made explicit and controllable by hand.",["Valid Parentheses","Min Stack","Implement Queue using Stacks"]],
+      [44,"Stack II — monotonic stack","A new pattern: keep the stack sorted as you go to answer 'next greater' questions.",["Next Greater Element I","Daily Temperatures","Largest Rectangle in Histogram"]],
+      [45,"Queues & Deques","FIFO order sets up the level-order tree traversal you'll need next week.",["Implement Stack using Queues","Design Circular Queue","Sliding Window Maximum (redo with a deque)"]],
+      [46,"Stack applications","Stacks quietly power how calculators and parsers work.",["Evaluate Reverse Polish Notation","Decode String","Basic Calculator (attempt)"]],
+      [47,"Practice day","Mix stack and queue problems.",["3 medium problems"]],
+      [48,"Rest & review","Review only — read back through the week's notes.",["Review only"]],
+      [49,"Mock interview day","Explain your approach out loud before coding, like a real interview.",["2 timed mediums, 60 min"]]
+    ]},
+    {name:"Trees", theme:"Tree traversal is recursion (Week 3) plus the level-order idea from queues (Week 7).", days:[
+      [50,"Trees I — traversals","Recursion and the queue you just built combine into pre/in/post-order and level-order traversal.",["Binary Tree Inorder Traversal","Binary Tree Level Order Traversal","Maximum Depth of Binary Tree"]],
+      [51,"Trees II — construct & validate","Rebuild a tree from its traversals — proof you actually understand them.",["Construct Binary Tree from Preorder and Inorder Traversal","Same Tree","Symmetric Tree"]],
+      [52,"Trees III — path problems","Recursion tracks running totals as it walks down and back up the tree.",["Path Sum","Diameter of Binary Tree","Binary Tree Maximum Path Sum"]],
+      [53,"Binary Search Trees I","Binary search from Day 22, now shaped like a tree instead of an array.",["Validate Binary Search Tree","Insert into a Binary Search Tree","Lowest Common Ancestor of a BST"]],
+      [54,"Binary Search Trees II","BST order lets you answer ranking questions traversal alone can't.",["Kth Smallest Element in a BST","Convert Sorted Array to Binary Search Tree","Delete Node in a BST"]],
+      [55,"Practice day","Mix Tree and BST problems in one sitting.",["3 medium problems"]],
+      [56,"Rest + mock","Timed, tree-focused.",["Timed mock, 60 min"]]
+    ]},
+    {name:"Heaps, Tries & Union-Find", theme:"A heap is a self-sorting structure; a trie is a tree built for strings; Union-Find sets up graphs.", days:[
+      [57,"Heap / Priority Queue I","Think of it as sorting week's idea, kept 'always sorted at the top' instead of sorted all at once.",["Kth Largest Element in a Stream","Last Stone Weight","Top K Frequent Elements (redo with a heap)"]],
+      [58,"Heap II — two-heap pattern","Two heaps split a dataset in half and track its middle in real time.",["Find Median from Data Stream","Task Scheduler","K Closest Points to Origin"]],
+      [59,"Trie","A tree (Week 8) specialized for strings (Week 2) — same shape, new purpose.",["Implement Trie (Prefix Tree)","Design Add and Search Words Data Structure","Word Search II (attempt)"]],
+      [60,"Union-Find (Disjoint Set)","Groups things into connected clusters — you'll lean on this heavily in graph week.",["Number of Provinces","Redundant Connection","Accounts Merge"]],
+      [61,"Practice day","Mix heap and trie problems.",["3 medium problems"]],
+      [62,"Weak-area buffer","Fill whichever gap your tracker shows lowest.",["Your choice"]],
+      [63,"Rest + mock","Timed, mixed structures.",["Timed mock, 60 min"]]
+    ]},
+    {name:"Graphs I", theme:"BFS is the queue idea generalized; DFS is recursion, generalized to any shape.", days:[
+      [64,"Graph representation & BFS","The level-order idea from tree BFS (Day 50) now works on any connected structure.",["Number of Islands","Flood Fill","Rotting Oranges"]],
+      [65,"Graph DFS","DFS is Day 15's recursion, just walking a graph instead of a tree.",["Clone Graph","Course Schedule","Pacific Atlantic Water Flow"]],
+      [66,"Connected components & bipartite check","Use BFS/DFS to answer 'how many separate groups exist here'.",["Number of Connected Components in an Undirected Graph","Is Graph Bipartite?","Surrounded Regions"]],
+      [67,"Topological Sort","Ordering tasks so nothing runs before its dependency — DFS with a twist.",["Course Schedule II","Find Eventual Safe States","Alien Dictionary (attempt)"]],
+      [68,"Practice day","Mix BFS/DFS problems, decide which to use before coding.",["3 medium problems"]],
+      [69,"Rest & review","Review only.",["Review only"]],
+      [70,"Mock interview","Timed, graph-focused.",["2 timed mediums, 60 min"]]
+    ]},
+    {name:"Graphs II & Greedy", theme:"Weighted BFS becomes Dijkstra; Union-Find from Week 9 returns for spanning trees.", days:[
+      [71,"Shortest Path — Dijkstra","BFS handles unweighted graphs; add a heap from Week 9 and it handles weighted ones too.",["Network Delay Time","Cheapest Flights Within K Stops","Path With Minimum Effort"]],
+      [72,"Minimum Spanning Tree","Union-Find from Day 60 returns to connect a graph as cheaply as possible.",["Min Cost to Connect All Points"]],
+      [73,"Greedy I","A different mindset: make the locally-best choice and prove it's globally best — sets up how you'll question DP next week.",["Jump Game","Jump Game II","Gas Station"]],
+      [74,"Greedy II — intervals","Sort first, then sweep once — a pattern that reappears constantly.",["Non-overlapping Intervals","Insert Interval","Partition Labels"]],
+      [75,"Practice day","Mix graph and greedy problems.",["3 medium problems"]],
+      [76,"Weak-area buffer","Fill your lowest-confidence gap.",["Your choice"]],
+      [77,"Rest + mock","Timed, mixed.",["Timed mock, 60 min"]]
+    ]},
+    {name:"Dynamic Programming", theme:"DP is recursion (Week 3) plus remembering what you've already computed — the single biggest unlock in DSA.", days:[
+      [78,"DP mindset — memo vs. tabulation","Recursion plus a memory: stop recomputing the same subproblem twice.",["Climbing Stairs","House Robber","Fibonacci — redo Day 15 with memoization"]],
+      [79,"DP on 1D arrays","Apply yesterday's memory trick to problems you already half-know.",["House Robber II","Longest Increasing Subsequence","Maximum Subarray — redo Day 4 as DP"]],
+      [80,"DP on Strings I","Two pointers into a 2D table — comparing two strings position by position.",["Longest Common Subsequence","Edit Distance","Palindromic Substrings"]],
+      [81,"DP on Strings II","Extend yesterday's table logic to harder string comparisons.",["Longest Palindromic Substring","Distinct Subsequences","Wildcard Matching (attempt)"]],
+      [82,"Knapsack pattern","One of the most reused DP shapes in interviews — include it or don't, at every step.",["0/1 Knapsack (GfG)","Partition Equal Subset Sum","Coin Change"]],
+      [83,"DP on Grids","Matrix traversal from Week 1 meets the memory trick from Day 78.",["Unique Paths","Minimum Path Sum","Dungeon Game (attempt)"]],
+      [84,"Practice day","Hard-tagged DP — if stuck 30 min, look up the approach, then implement it yourself.",["3 hard DP problems"]]
+    ]},
+    {name:"Consolidation & Interview Readiness", theme:"No new topics — only repairing weak spots and rehearsing the real thing.", days:[
+      [85,"Full weak-area review","List every topic under 80% confidence in your tracker — be honest.",["Review your tracker, no coding yet"]],
+      [86,"Weak-area repair","Only the topics from yesterday's list.",["3–4 problems from weak topics"]],
+      [87,"Mock interview 1","Say your approach out loud before writing a line of code, then critique yourself after.",["2 timed mediums, 45 min"]],
+      [88,"Mock interview 2","Slightly harder than yesterday, closer to the real thing.",["1 medium + 1 hard, 60 min"]],
+      [89,"Behavioral & story prep","Technical skill gets you the interview; stories get you the offer. Prep 3–4 using the STAR method.",["STAR prep, 2h + 1-2 light problems"]],
+      [90,"Final mock + your own cheat sheet","Write, from memory, every pattern you now recognize — that list is what 90 days of consistency built.",["2 timed problems, 60 min","Write your personal pattern cheat sheet"]]
+    ]}
+  ];
+
+  const mindsetTips = {
+    1:"You're learning to measure, not to be clever. Read slowly — this vocabulary carries the whole 90 days.",
+    2:"Nothing fancy today. Get comfortable just moving through data — every future structure builds on this comfort.",
+    3:"Notice the shift: instead of solving once, you're pre-computing to answer many times. That trade is DSA in one sentence.",
+    4:"You'll want to overthink this. Don't. The insight is small — trust it once you see it work.",
+    5:"This is fiddly index math. Draw it on paper before you type a single line.",
+    6:"Resist the urge to look up the answer at minute one. Sit in the stuck feeling — that's where learning happens.",
+    7:"Rest is not falling behind. Read your notes slowly, no pressure to solve anything today.",
+    8:"Remind yourself: a string is just an array wearing a different outfit. Nothing new to fear here.",
+    9:"Watch how the same trick reappears. Recognizing repetition is the real skill you're building.",
+    10:"This will feel confusing at first — that's normal. The window pattern clicks after the third problem, not the first.",
+    11:"This is quiet, unglamorous groundwork. It won't feel exciting, but DP and graphs will thank you later.",
+    12:"Don't memorize bit tricks — understand what a single bit flip actually does. Understanding beats memorizing.",
+    13:"Two topics, one sitting — the point is to notice they're the same muscle wearing different clothes.",
+    14:"Time pressure will make you feel worse than you are. Stay calm, breathe, and just start.",
+    15:"This is the most important day of the whole plan. Give it your full attention — everything ahead leans on this.",
+    16:"Trust the function to work for smaller inputs before you fully understand why. That leap of faith is recursion.",
+    17:"Picture a decision tree in your head before you write code. See it, then build it.",
+    18:"Adding rules doesn't change the shape of the solution, just what's allowed. Don't panic at 'harder-looking' problems.",
+    19:"These look intimidating by name only. Underneath, it's still choose → explore → undo.",
+    20:"Draw the tree before you code. If you can't draw it, you're not ready to code it yet.",
+    21:"Recall from memory, don't re-read. The struggle to remember is what makes it stick.",
+    22:"This feels almost too simple to be powerful. Respect it — it shows up everywhere later.",
+    23:"Ask yourself: what am I really searching for? Once you see the yes/no boundary, the code writes itself.",
+    24:"Slow down and actually trace the algorithm on paper. You've used sort() a hundred times — now see what it hides.",
+    25:"This is recursion again, wearing a new hat. If it feels familiar, that's the point.",
+    26:"Small syntax, big power. Take your time reading how a comparator actually decides order.",
+    27:"Mixing today's topics on purpose — notice which one you reach for first, and ask yourself why.",
+    28:"A timer changes how your brain works. Don't fight the nervous feeling, just keep moving.",
+    29:"You've done this before without a name for it. Naming a pattern is what makes it reusable on command.",
+    30:"Same idea, new name. Once a pattern has a name, you'll start seeing it everywhere — that's the goal.",
+    31:"This is the first time speed feels 'free.' Notice how much simpler the code becomes once lookup is instant.",
+    32:"Counting first, deciding second — a small habit that will save you in far harder problems later.",
+    33:"Don't force one tool. Ask which pattern actually fits before you touch the keyboard.",
+    34:"Pause before each problem and name the pattern out loud. That habit separates confident coders from guessers.",
+    35:"You are 35 days in. That is not nothing — bring that confidence into the timer.",
+    36:"New shape, same logic. Don't let unfamiliar syntax make you feel like a beginner again.",
+    37:"Picture two runners on a track, one faster than the other. If you can see it, you can code it.",
+    38:"This is a puzzle of patience, not difficulty. Slow, careful pointer moves beat rushed ones.",
+    39:"This is the hardest linked-list day. It's supposed to feel hard — that's how you know it's teaching you something.",
+    40:"Trace every arrow on paper first. Typing before tracing is where most linked-list bugs come from.",
+    41:"Be honest with yourself here, not impressive. Nobody sees this list but you.",
+    42:"Six weeks of consistency got you here. Let that be the thing you feel, not anxiety.",
+    43:"A stack is simpler than it sounds — last one in, first one out. Say that out loud before you start.",
+    44:"This pattern feels like magic the first time. It's not magic, it's just a stack kept sorted on purpose.",
+    45:"FIFO instead of LIFO — one small flip in direction. Don't overthink the switch.",
+    46:"You use calculators and parsers every day without seeing the stack underneath. Today you get to see it.",
+    47:"Ask 'stack or queue?' before you write a line. That question alone solves half of today's problems.",
+    48:"No new problems today. Let your brain quietly file away the last two weeks.",
+    49:"Say your plan out loud before typing, even if it feels silly. That's exactly what a real interview asks of you.",
+    50:"You already know recursion and queues — today is just those two ideas meeting a new shape.",
+    51:"If you can rebuild a tree from its traversal, you understand traversal. If you can't yet, that's fine — that's why you're here.",
+    52:"Picture the recursion going down, then back up, carrying a running total. See the round trip before you code it.",
+    53:"This is binary search from week 4, just standing up as a tree. The idea hasn't changed, only its shape.",
+    54:"BST order is a superpower. Ask yourself what extra question this order lets you answer.",
+    55:"Mixing tree types on purpose today — notice which shape each problem is hinting at.",
+    56:"Eight weeks in. If today feels harder than week one, that's not you getting worse — the problems are just getting real.",
+    57:"Think of it as 'always sorted at the top, messy everywhere else.' That's the whole idea.",
+    58:"Two structures working together is a new kind of thinking. Give yourself extra time to sit with this one.",
+    59:"This will feel oddly satisfying once it clicks — a tree that spells things out, literally.",
+    60:"This topic feels abstract until you use it. Push through the confusion; the payoff comes in graph week.",
+    61:"New tools feel awkward at first use. That awkwardness fades by the third problem, not the first.",
+    62:"There's no shame in a low-confidence topic here. There is shame in ignoring it and hoping it doesn't show up.",
+    63:"Nine weeks of consistency. That number alone should quiet some of the interview nerves.",
+    64:"A graph is just a tree that's allowed to have cycles. Don't let the new vocabulary intimidate you.",
+    65:"This is Day 15's recursion wearing a graph costume. If recursion felt solid then, trust it now.",
+    66:"You're just asking BFS/DFS a slightly different question today. The tool hasn't changed.",
+    67:"Think about task order in real life — you can't ship code before you write it. That's this entire topic.",
+    68:"Before coding, decide BFS or DFS on purpose, not by habit. That decision is the actual skill.",
+    69:"Let graphs settle for a day. This topic rewards patience more than most.",
+    70:"Graphs intimidate people by reputation more than difficulty. You've done the reps — trust them.",
+    71:"This is BFS that finally cares about distance, not just steps. One idea, slightly upgraded.",
+    72:"Zoom out here — the goal is simply 'connect everything as cheaply as possible.' Don't lose that in the code.",
+    73:"A different kind of confidence today — commit to the locally-best move and trust the reasoning behind it.",
+    74:"Sort first, decide once. Most of greedy is really about picking the right sort.",
+    75:"Mixing graph and greedy on purpose — notice how different 'the right approach' feels between them.",
+    76:"Eleven weeks of doing this. Fixing a weak spot now is easier than pretending it's not there in an interview.",
+    77:"You're closer to the interview than the start line. Let that motivate today's timer, not scare you.",
+    78:"This is the single biggest unlock in DSA. Slow down today more than any other day in the plan.",
+    79:"Notice this is Day 15's recursion plus a memory. If it feels familiar, you're seeing it correctly.",
+    80:"A table isn't scary — it's just recursion's answers written down so you never solve the same thing twice.",
+    81:"Harder table, same idea. Don't let the size of the grid intimidate you — the logic per cell stays simple.",
+    82:"This shape reappears constantly in interviews. Learn it once, deeply, rather than fast and shallow.",
+    83:"Old friend, new tool — the matrix traversal from Day 2, now paired with memory. Notice the reunion.",
+    84:"It's fine to peek at an approach after real effort. The goal today is exposure to hard shapes, not suffering alone.",
+    85:"Be brutally honest with your tracker today. This list is for you, not for show.",
+    86:"No new topics — just quietly closing gaps. This is unglamorous work that pays off in the room.",
+    87:"Say every thought out loud, even the wrong ones. Interviewers hire your thinking, not just your final answer.",
+    88:"Harder than yesterday on purpose. If it feels uncomfortable, that's exactly the point of a mock.",
+    89:"Technical skill gets you the interview. Today's work is what gets you the offer — treat it with the same seriousness.",
+    90:"Write your patterns from memory before you check anything. Whatever comes to mind first is what you actually learned."
+  };
+
+  // spaced revision — every completed day cycles through these 5 checkpoints
+  const revisionPlan = [
+    { offset:1,  tag:'Quick recall',    type:'Reading',  task:"Re-read your notes & the approach for this day. No new problems — just refresh the logic in your head." },
+    { offset:3,  tag:'Light practice',  type:'Question', task:'Re-solve 1 problem from this day, from scratch, without checking your old code.' },
+    { offset:7,  tag:'Full recall',     type:'Question', task:'Re-solve 2 problems from this day, cold — no hints, no old code.' },
+    { offset:15, tag:'Explain + solve', type:'Mixed',    task:'Explain the approach out loud in under 60 seconds, then re-solve the hardest problem from this day.' },
+    { offset:30, tag:'Final check',     type:'Question', task:'Re-solve the hardest problem from this day, cold and timed. If it feels easy, the topic is locked in.' }
+  ];
+
+  // flatten to day lookup
+  const dayMap = {};
+  camps.forEach((camp, ci) => camp.days.forEach(([num, topic, connect, problems]) => {
+    dayMap[num] = { num, week: ci+1, weekName: camp.name, topic, connect, problems, mindset: mindsetTips[num], subtasks: ['Learn: '+topic, ...problems.map(p=>'Solve: '+p)] };
+  }));
+  const allDayNums = Object.keys(dayMap).map(Number).sort((a,b)=>a-b);
+
+  const months = [
+    { id:'month_1', label:'Foundations + Core Patterns', weeks:[1,2,3,4,5] },
+    { id:'month_2', label:'Data Structures Deep Dive', weeks:[6,7,8,9] },
+    { id:'month_3', label:'Graphs, DP & Interview Ready', weeks:[10,11,12,13] }
+  ];
+
+  const phoneSteps = [
+    ["audit --days 2", "check screen time before deleting anything — get the real list"],
+    ["rm -rf instagram/ shorts/ tiktok/ x/", "delete every infinite-scroll app"],
+    ["notifications --disable-all --except calls,dms", "silent phone, boring phone"],
+    ["homescreen --keep phone,messages,camera,leetcode", "strip everything else into one folder"],
+    ["schedule grayscale --during study-blocks", "color is part of the addiction loop"],
+    ["mv phone.location another_room/", "distance beats willpower, every time"],
+    ["review --after 30d", "if you don't miss what you deleted, keep it deleted"]
+  ];
+
+  const logs = [
+    ["09:02:15","INFO","Motivation gets you to open the laptop once. Discipline is what makes day 47 look like day 1."],
+    ["09:14:41","INFO","You don't need to feel ready. You need to hit save and move to the next line."],
+    ["10:03:02","WARN","A missed day is a bug, not a crash. Patch it tomorrow — don't rewrite the whole file."],
+    ["11:20:09","INFO","Nobody debugs a system they built in one sitting. Nobody masters DSA in one either."],
+    ["12:45:33","INFO","git commit -m \"showed up today, nothing special\" — that commit is the actual streak."],
+    ["14:02:18","INFO","The interviewer isn't testing if you're a genius. They're testing if you've done the reps."],
+    ["15:37:50","INFO","Comment your doubts. Don't let them block the build."],
+    ["17:11:04","INFO","Consistency is running the same small script every day until the output finally changes."],
+    ["19:48:22","INFO","You are not behind. You are mid-compile."],
+    ["21:59:59","WARN","Skipping a rest day doesn't make tomorrow faster. It just adds tech debt to your body."]
+  ];
+
+  const checklist = [
+    "Interviewers weigh your explanation as much as your code — narrate your thinking before and while you type.",
+    "Ask clarifying questions before coding. Real engineers do this on day one of any ticket — it's not a weakness, it's the job.",
+    "Dry-run your solution on a sample input before saying \"done.\" A silent bug found by you beats one found by the interviewer.",
+    "You will forget exact solutions. That's expected — what should stick is pattern recognition: \"this smells like sliding window.\"",
+    "State time and space complexity out loud without being asked. It shows you think about cost, not just correctness.",
+    "If you're stuck, talk through a brute force first. A working O(n\u00b2) beats a silent, broken attempt at O(n).",
+    "Practice explaining trade-offs, not just answers — \"I could use a heap here for O(log n), but a simple sort is fine given the constraints.\""
+  ];
+
+  const resources = [
+    ["LeetCode", "https://leetcode.com", "Primary practice bank — filter by tag to match each week's topic."],
+    ["GeeksforGeeks", "https://www.geeksforgeeks.org", "Good for concept explanations alongside a problem."],
+    ["NeetCode", "https://neetcode.io", "Curated pattern-based problem lists and video walkthroughs."],
+    ["Take U Forward (Striver's Sheet)", "https://takeuforward.org", "A well-known structured DSA sheet many candidates follow alongside this plan."]
+  ];
+
+  // ---------------- storage ----------------
+  const PKEY = 'dsa90-ide-progress';
+  const SKEY = 'dsa90-ide-streak';
+  let progress = {};
+  try { progress = JSON.parse(localStorage.getItem(PKEY) || '{}'); } catch(e){ progress = {}; }
+  let streak = { lastDate: null, count: 0 };
+  try { streak = JSON.parse(localStorage.getItem(SKEY) || 'null') || streak; } catch(e){}
+
+  function saveProgress(){ try{ localStorage.setItem(PKEY, JSON.stringify(progress)); }catch(e){} }
+  function saveStreak(){ try{ localStorage.setItem(SKEY, JSON.stringify(streak)); }catch(e){} }
+
+  // ---------------- start date ----------------
+  const DKEY = 'dsa90-ide-startdate';
+  let startDate = localStorage.getItem(DKEY);
+  if (!startDate) { startDate = new Date().toISOString().slice(0,10); try{ localStorage.setItem(DKEY, startDate); }catch(e){} }
+  function dateForDay(num){
+    const d = new Date(startDate+'T00:00:00');
+    d.setDate(d.getDate() + (num-1));
+    return d;
+  }
+  function fmtDate(d){
+    return d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  }
+  function todayDayNum(){
+    const start = new Date(startDate+'T00:00:00'); const today = new Date(); today.setHours(0,0,0,0);
+    const diff = Math.round((today - start) / 86400000) + 1;
+    return diff;
+  }
+
+  function bumpStreak(){
+    const today = new Date().toISOString().slice(0,10);
+    if (streak.lastDate === today) return;
+    if (streak.lastDate) {
+      const prev = new Date(streak.lastDate); const now = new Date(today);
+      const diffDays = Math.round((now - prev) / 86400000);
+      streak.count = diffDays === 1 ? streak.count + 1 : 1;
+    } else { streak.count = 1; }
+    streak.lastDate = today;
+    saveStreak();
+    if (MILESTONES.includes(streak.count)) {
+      toast(streak.count+'-day streak!', "You've shown up "+streak.count+' days in a row. That is the whole game.', 'streak', '🔥');
+      confetti(streak.count >= 30);
+    }
+  }
+
+  function dayPct(num){
+    const d = dayMap[num]; const total = d.subtasks.length;
+    let done = 0; for (let i=0;i<total;i++) if (progress['day:'+num+':'+i]) done++;
+    return Math.round(done/total*100);
+  }
+  function dayDoneCount(num){
+    const d = dayMap[num]; let done=0; d.subtasks.forEach((_,i)=>{ if(progress['day:'+num+':'+i]) done++; });
+    return done;
+  }
+  function isDayFull(num){ return dayPct(num) === 100; }
+  function weekFull(weekIdx){ return camps[weekIdx-1].days.every(d=>isDayFull(d[0])); }
+  function monthOf(weekIdx){ return months.find(m=>m.weeks.includes(weekIdx)); }
+  function monthFull(monthObj){ return monthObj.weeks.every(weekFull); }
+  function overallFull(){ return allDayNums.every(isDayFull); }
+  const MILESTONES = [3,7,14,21,30,45,60,90];
+
+  function totalsInRange(lo,hi){
+    let total=0, done=0;
+    allDayNums.filter(n=>n>=lo&&n<=hi).forEach(n=>{
+      const d = dayMap[n]; total += d.subtasks.length;
+      d.subtasks.forEach((_,i)=>{ if(progress['day:'+n+':'+i]) done++; });
+    });
+    return {total, done};
+  }
+  function setupDone(){ return !!progress['setup:0']; }
+  function phoneDone(){ let c=0; phoneSteps.forEach((_,i)=>{ if(progress['phone:'+i]) c++; }); return c; }
+
+  // ---------------- spaced revision ----------------
+  function planEndDate(){ return dateForDay(90); }
+  // shrinks the 1/3/7/15/30 gaps for days completed late in the plan, so a day's
+  // full revision cycle still lands on/near the plan's end date instead of overflowing past it
+  function revOffsetsFor(num){
+    const base = revisionPlan.map(s=>s.offset);
+    const baseStr = progress['revdate:'+num];
+    if (!baseStr) return base;
+    const baseDate = new Date(baseStr+'T00:00:00');
+    const remaining = Math.round((planEndDate() - baseDate) / 86400000);
+    if (remaining >= 30) return base;
+    const room = Math.max(remaining, 5); // never compress tighter than 1/2/3/4/5 days apart
+    return base.map((o,i) => Math.max(i+1, Math.round(o*room/30)));
+  }
+  function revDate(num, si){
+    const base = progress['revdate:'+num];
+    if (!base) return null;
+    const d = new Date(base+'T00:00:00');
+    d.setDate(d.getDate() + revOffsetsFor(num)[si]);
+    return d;
+  }
+  function revStageDone(num, si){ return !!progress['rev:'+num+':'+si]; }
+  function revCurrentStage(num){
+    if (!progress['revdate:'+num]) return null;
+    for (let si=0; si<revisionPlan.length; si++) if (!revStageDone(num, si)) return si;
+    return null; // all 5 stages done
+  }
+  function revStatus(num){
+    const si = revCurrentStage(num);
+    if (si === null) return progress['revdate:'+num] ? 'complete' : 'locked';
+    const today = new Date(); today.setHours(0,0,0,0);
+    return today >= revDate(num, si) ? 'due' : 'upcoming';
+  }
+  function dueRevisionsToday(){
+    return allDayNums.filter(n => progress['revdate:'+n] && revStatus(n) === 'due')
+      .map(n => ({ num:n, si: revCurrentStage(n) }));
+  }
+
+  function firstIncomplete(){
+    if (!setupDone()) return {type:'setup'};
+    for (const n of allDayNums) if (!isDayFull(n)) return {type:'day', num:n};
+    return null;
+  }
+
+  // ---------------- state ----------------
+  let openTabId = null; // second tab (besides dashboard)
+  let currentView = 'dashboard';
+
+  function openView(id){
+    currentView = id;
+    if (id !== 'dashboard') openTabId = id;
+    renderTabs(); renderBreadcrumb(); renderContent(); renderTree();
+    document.getElementById('content').scrollTop = 0;
+    document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function labelFor(id){
+    if (id === 'dashboard') return 'dashboard';
+    if (id === 'setup') return 'setup.sh';
+    if (id === 'revision') return 'revision.log';
+    if (id === 'phone') return 'phone_cleanup.sh';
+    if (id === 'consistency') return 'consistency.log';
+    if (id === 'checklist') return 'interview_checklist.md';
+    if (id === 'resources') return 'resources.md';
+    if (id.startsWith('day-')) return 'day-'+String(id.split('-')[1]).padStart(2,'0')+'.js';
+    return id;
+  }
+  function pathFor(id){
+    if (id === 'dashboard') return ['dashboard'];
+    if (id === 'setup') return ['setup.sh'];
+    if (id === 'revision') return ['revision.log'];
+    if (['phone','consistency','checklist','resources'].includes(id)) return ['reference', labelFor(id)];
+    if (id.startsWith('day-')) {
+      const num = +id.split('-')[1]; const d = dayMap[num];
+      const month = months.find(m=>m.weeks.includes(d.week));
+      return [month.id, 'week_'+String(d.week).padStart(2,'0'), labelFor(id)];
+    }
+    return [id];
+  }
+
+  function renderTabs(){
+    const tb = document.getElementById('tabbar'); tb.innerHTML = '';
+    const dashTab = document.createElement('div');
+    dashTab.className = 'tab' + (currentView==='dashboard' ? ' active' : '');
+    dashTab.innerHTML = '📊 dashboard';
+    dashTab.onclick = () => openView('dashboard');
+    tb.appendChild(dashTab);
+    if (openTabId) {
+      const t = document.createElement('div');
+      t.className = 'tab' + (currentView===openTabId ? ' active' : '');
+      t.innerHTML = '📄 ' + labelFor(openTabId) + ' <span class="x">✕</span>';
+      t.querySelector('.x').onclick = (e) => { e.stopPropagation(); openTabId=null; openView('dashboard'); };
+      t.onclick = () => openView(openTabId);
+      tb.appendChild(t);
+    }
+  }
+  function renderBreadcrumb(){
+    const bc = document.getElementById('breadcrumb');
+    const parts = pathFor(currentView);
+    bc.innerHTML = '90-day-interview-prep ' + parts.map((p,i)=> ' / ' + (i===parts.length-1 ? '<span class="cur">'+p+'</span>' : p)).join('');
+  }
+
+  // ---------------- content renderers ----------------
+  function renderContent(){
+    const c = document.getElementById('content');
+    if (currentView === 'dashboard') return renderDashboard(c);
+    if (currentView === 'setup') return renderSetup(c);
+    if (currentView === 'revision') return renderRevision(c);
+    if (currentView === 'phone') return renderPhone(c);
+    if (currentView === 'consistency') return renderConsistency(c);
+    if (currentView === 'checklist') return renderChecklist(c);
+    if (currentView === 'resources') return renderResources(c);
+    if (currentView.startsWith('day-')) return renderDay(c, +currentView.split('-')[1]);
+  }
+
+  function renderDashboard(c){
+    const {total, done} = totalsInRange(1,90);
+    const overallPct = total ? Math.round(done/total*100) : 0;
+    const daysFull = allDayNums.filter(isDayFull).length;
+    const dueRevisions = dueRevisionsToday();
+    const next = firstIncomplete();
+    const nextLabel = !next ? null : (next.type==='setup' ? 'Setup — Get Ready' : ('Day '+next.num+' — '+dayMap[next.num].topic));
+    const nextTarget = !next ? null : (next.type==='setup' ? 'setup' : 'day-'+next.num);
+    const nextDate = !next ? null : (next.type==='setup' ? null : fmtDate(dateForDay(next.num)));
+    const nextMindset = !next ? null : (next.type==='setup' ? null : dayMap[next.num].mindset);
+
+    const t1 = totalsInRange(1,84), t2 = totalsInRange(85,90);
+    const t3done = phoneDone(), t3total = phoneSteps.length;
+
+    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+    const quote = logs[dayOfYear % logs.length];
+    const tDay = todayDayNum();
+
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span><br>
+       &nbsp;* 90-Day Interview Prep — DSA Track<br>
+       &nbsp;* 500-ish small commits beat one big rewrite.<br>
+       &nbsp;<span class="kw">*/</span></p>
+
+      <div class="quote-banner">// today's reminder — <span>${quote[2]}</span></div>
+
+      ${next ? `
+      <div class="continue-card">
+        <div><div class="label">Continue where you left off${nextDate?' · '+nextDate:''}</div><div class="title">${nextLabel}</div>${nextMindset?`<div class="continue-mindset">🧠 ${nextMindset}</div>`:''}</div>
+        <button class="btn-open" id="openNext">Open →</button>
+      </div>` : `
+      <div class="continue-card">
+        <div><div class="label">Status</div><div class="title">🎉 All 90 days complete — you're interview-ready.</div></div>
+      </div>`}
+
+      ${dueRevisions.length ? `
+      <div class="continue-card" style="border-left-color:var(--purple)">
+        <div><div class="label">Revision due today</div><div class="title">🔁 ${dueRevisions.length} day${dueRevisions.length>1?'s':''} need a revision pass</div></div>
+        <button class="btn-open" id="openRevision" style="background:var(--purple)">Open →</button>
+      </div>` : ``}
+
+      <div class="stats">
+        <div class="stat-card"><div class="stat-num">${overallPct}<span class="small">%</span></div><div class="stat-label">Overall progress</div></div>
+        <div class="stat-card"><div class="stat-num">${daysFull}<span class="small">/90</span></div><div class="stat-label">Days fully complete</div></div>
+        <div class="stat-card"><div class="stat-num">${streak.count||0} ${streak.count?'🔥':''}</div><div class="stat-label">Consistency streak</div></div>
+        <div class="stat-card"><div class="stat-num">${done}<span class="small">/${total}</span></div><div class="stat-label">Tasks checked off</div></div>
+      </div>
+
+      <h3 class="section-h"><span class="sl">//</span> 90-day commit graph <span class="datectl">plan started <input type="date" id="startDateInput" value="${startDate}"> ${tDay>=1&&tDay<=90?' · today is Day '+tDay:''}</span></h3>
+      <div class="grid90" id="grid90"></div>
+      <div class="grid-foot">Less <span class="legend-sq" style="background:var(--bg-card)"></span><span class="legend-sq" data-lvl="1" style="background:#12321C"></span><span class="legend-sq" style="background:#1D6B33"></span><span class="legend-sq" style="background:var(--green)"></span> More · ring = today · tap a square to jump to that day</div>
+
+      <h3 class="section-h"><span class="sl">//</span> progress by track</h3>
+      <div class="track-row"><div class="track-name">DSA Roadmap · Days 1–84</div><div class="track-bar"><div class="track-fill" style="width:${t1.total?Math.round(t1.done/t1.total*100):0}%; background:var(--blue)"></div></div><div class="track-count">${t1.done}/${t1.total}</div></div>
+      <div class="track-row"><div class="track-name">Interview Readiness · 85–90</div><div class="track-bar"><div class="track-fill" style="width:${t2.total?Math.round(t2.done/t2.total*100):0}%; background:var(--purple)"></div></div><div class="track-count">${t2.done}/${t2.total}</div></div>
+      <div class="track-row"><div class="track-name">Focus & Consistency · Phone</div><div class="track-bar"><div class="track-fill" style="width:${Math.round(t3done/t3total*100)}%; background:var(--orange)"></div></div><div class="track-count">${t3done}/${t3total}</div></div>
+
+      <h3 class="section-h"><span class="sl">//</span> stay consistent — week by week</h3>
+      <table class="consist-table">
+        <thead><tr><th>Week</th><th>Topic</th><th>Days</th><th>Status</th></tr></thead>
+        <tbody>${camps.map((camp,ci)=>{
+          const wk = ci+1; const wdays = camp.days.map(dd=>dd[0]);
+          const wdone = wdays.filter(isDayFull).length; const wtotal = wdays.length;
+          let status;
+          if (wdone === 0) status = '<span class="st-pending">— not started</span>';
+          else if (wdone === wtotal) status = '<span class="st-done">✅ suite passed</span>';
+          else status = '<span class="st-progress">🔥 in progress</span>';
+          const isCurrentWeek = tDay>=wdays[0] && tDay<=wdays[wdays.length-1];
+          return `<tr class="${isCurrentWeek?'current-week':''}">
+            <td>week_${String(wk).padStart(2,'0')}</td>
+            <td>${camp.name}</td>
+            <td>${wdone}/${wtotal}</td>
+            <td>${status}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    `;
+    if (next) document.getElementById('openNext').onclick = () => openView(nextTarget);
+    if (dueRevisions.length) document.getElementById('openRevision').onclick = () => openView('revision');
+    document.getElementById('startDateInput').addEventListener('change', (e)=>{
+      startDate = e.target.value; try{ localStorage.setItem(DKEY, startDate); }catch(err){}
+      renderDashboard(c);
+    });
+
+    const grid = document.getElementById('grid90');
+    allDayNums.forEach(n=>{
+      const pct = dayPct(n);
+      const lvl = pct===0?0:pct<100?(pct<50?1:2):3;
+      const sq = document.createElement('div'); sq.className='sq'+(n===tDay?' today':''); sq.dataset.lvl=lvl; sq.title='Day '+n+' — '+fmtDate(dateForDay(n))+' — '+pct+'%';
+      sq.onclick = () => openView('day-'+n);
+      grid.appendChild(sq);
+    });
+  }
+
+  function taskRow(key, text, checkedAttr){
+    return `<div class="task-row">
+      <input type="checkbox" class="task-check" id="${key}" ${checkedAttr}>
+      <label class="task-label" for="${key}"><span class="task-badge"></span><span class="task-text">${text}</span></label>
+    </div>`;
+  }
+
+  function renderSetup(c){
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span> setup.sh — before Day 1 <span class="kw">*/</span></p>
+      <p class="day-comment">// pick your primary language, create your accounts, and skim this whole plan once so nothing on Day 1 feels unfamiliar.</p>
+      ${taskRow('setup:0', 'Pick a language, sign up on LeetCode &amp; GeeksforGeeks, read through this plan once', progress['setup:0']?'checked':'')}
+    `;
+    c.querySelectorAll('.task-check').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        progress[cb.id] = cb.checked; saveProgress();
+        if (cb.checked) { bumpStreak(); toast('Setup complete!', 'Day 1 is ready when you are.', 'day', '✅'); pulseStats(); }
+        renderTree();
+      });
+    });
+  }
+
+  function renderDay(c, num){
+    const d = dayMap[num];
+    const prev = allDayNums[allDayNums.indexOf(num)-1];
+    const next = allDayNums[allDayNums.indexOf(num)+1];
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span><br>
+       &nbsp;* Day ${num} — ${d.topic}<br>
+       &nbsp;* Week ${d.week} — ${d.weekName}<br>
+       &nbsp;* 📅 ${fmtDate(dateForDay(num))}<br>
+       &nbsp;<span class="kw">*/</span></p>
+      <p class="day-comment">// ${d.connect}</p>
+      <div class="mindset-box">🧠 <span class="mindset-label">Before you start:</span> ${d.mindset}</div>
+      ${(()=>{ const due = dueRevisionsToday(); if(!due.length) return ''; return `
+      <div class="mindset-box" style="background:#1E1440;border-color:#4A2A85;border-left-color:var(--purple)">
+        <div style="color:var(--purple);font-weight:700;margin-bottom:6px">🔁 Aaj ka revision — ${due.length} topic${due.length>1?'s':''} due</div>
+        ${due.map(r=>{
+          const stage = revisionPlan[r.si]; const key = 'rev:'+r.num+':'+r.si;
+          const label = `<span class="kw">Day ${r.num}</span> — ${dayMap[r.num].topic} <span class="str">[${stage.type}]</span><br><span style="color:var(--text-dim);font-size:12px">${stage.tag} — ${stage.task}</span>`;
+          return taskRow(key, label, progress[key]?'checked':'');
+        }).join('')}
+      </div>`; })()}
+      <div id="taskList">${d.subtasks.map((s,i)=> taskRow('day:'+num+':'+i, i===0? '<span class="kw">Learn</span>: '+s.slice(7) : '<span class="kw">Solve</span>: <span class="str">"'+s.slice(7)+'"</span>', progress['day:'+num+':'+i]?'checked':'')).join('')}</div>
+
+      <h3 class="section-h"><span class="sl">//</span> revision schedule</h3>
+      ${progress['revdate:'+num] ? `<div id="revList">${revisionPlan.map((stage,si)=>{
+        const key = 'rev:'+num+':'+si; const due = revDate(num, si);
+        const label = `<span class="kw">${stage.tag}</span> <span class="str">[${stage.type}]</span> — ${stage.task} <span style="color:var(--text-faint)">· due ${fmtDate(due)}</span>`;
+        return taskRow(key, label, progress[key]?'checked':'');
+      }).join('')}</div>` : `<p class="day-comment">// mark this day 100% complete to start its 5-step revision cycle (Day+1, +3, +7, +15, +30).</p>`}
+
+      <div class="daynav">
+        <a class="${prev?'':'disabled'}" id="prevDay">← ${prev ? 'day-'+String(prev).padStart(2,'0')+'.js' : 'start of plan'}</a>
+        <a class="${next?'':'disabled'}" id="nextDay">${next ? 'day-'+String(next).padStart(2,'0')+'.js' : 'end of plan'} →</a>
+      </div>
+    `;
+    if (prev) document.getElementById('prevDay').onclick = () => openView('day-'+prev);
+    if (next) document.getElementById('nextDay').onclick = () => openView('day-'+next);
+
+    c.querySelectorAll('.task-check').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const dayWasFull = isDayFull(num);
+        const week = d.week, month = monthOf(week);
+        const weekWasFull = weekFull(week), monthWasFull = monthFull(month), overallWasFull = overallFull();
+
+        progress[cb.id] = cb.checked;
+        saveProgress();
+        if (cb.checked) bumpStreak();
+
+        if (cb.checked) {
+          const dayIsFull = isDayFull(num);
+          if (!dayWasFull && dayIsFull) {
+            if (!progress['revdate:'+num]) { progress['revdate:'+num] = new Date().toISOString().slice(0,10); saveProgress(); }
+            toast('Day '+num+' complete!', d.topic, 'day', '🎉');
+            confetti(false); popSquareFor(num); pulseStats();
+            const weekIsFull = weekFull(week);
+            if (!weekWasFull && weekIsFull) {
+              setTimeout(()=> toast('Week '+week+' finished — '+d.weekName, 'Full suite passed ✅', 'week', '📦'), 550);
+            }
+            const monthIsFull = monthFull(month);
+            if (!monthWasFull && monthIsFull) {
+              setTimeout(()=> toast(month.label+' complete!', 'Onto the next month.', 'month', '🏔️'), monthIsFull && weekIsFull && !weekWasFull ? 1100 : 550);
+            }
+            if (!overallWasFull && overallFull()) {
+              setTimeout(()=> { toast('All 90 days complete!', "You're interview-ready. Go get it.", 'complete', '🏆'); confetti(true); }, 1300);
+            }
+          }
+        }
+        renderTree();
+        if (cb.id.startsWith('rev:')) renderContent();
+      });
+    });
+  }
+
+  function renderPhone(c){
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span> phone_cleanup.sh <span class="kw">*/</span></p>
+      <p class="day-comment">// the feed is built by hundreds of engineers to be addictive. don't fight it with willpower — remove the dependency.</p>
+      <div class="shellbox">${phoneSteps.map(([cmd,cm],i)=>`
+        <div class="sh-row">
+          <input type="checkbox" class="task-check" id="phone:${i}" ${progress['phone:'+i]?'checked':''}>
+          <label class="task-label" for="phone:${i}"><span class="task-badge"></span></label>
+          <span class="sh-prompt">$</span><span class="task-text">${cmd} <span class="sh-comment"># ${cm}</span></span>
+        </div>`).join('')}</div>
+    `;
+    c.querySelectorAll('.task-check').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const wasFull = phoneDone() === phoneSteps.length;
+        progress[cb.id] = cb.checked; saveProgress();
+        if (cb.checked) {
+          bumpStreak();
+          const isFull = phoneDone() === phoneSteps.length;
+          if (!wasFull && isFull) { toast('Phone cleaned up!', 'One less thing pulling your focus.', 'week', '📵'); confetti(false); pulseStats(); }
+        }
+        renderTree();
+      });
+    });
+  }
+
+  function renderConsistency(c){
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span> consistency.log — not hype, just what's actually true <span class="kw">*/</span></p>
+      ${logs.map(([ts,tag,msg])=>`<div class="log-row"><span class="log-ts">[${ts}]</span><span class="log-tag">${tag}</span><span>${msg}</span></div>`).join('')}
+    `;
+  }
+  function renderChecklist(c){
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span> interview_checklist.md — what's checked beyond correct code <span class="kw">*/</span></p>
+      ${checklist.map(t=>`<div class="md-row"><span class="md-mark">[x]</span><span>${t}</span></div>`).join('')}
+    `;
+  }
+  function renderResources(c){
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span> resources.md <span class="kw">*/</span></p>
+      ${resources.map(([n,u,d])=>`<div class="md-row"><span class="md-mark">→</span><span><a class="md-link" href="${u}" target="_blank" rel="noopener">${n}</a> — ${d}</span></div>`).join('')}
+    `;
+  }
+
+  function revRow(num, si){
+    const d = dayMap[num]; const stage = revisionPlan[si]; const key = 'rev:'+num+':'+si;
+    const due = revDate(num, si);
+    const label = `<span class="kw">Day ${num}</span> — ${d.topic} <span class="str">[${stage.type}]</span>`
+      + `<br><span style="color:var(--text-dim);font-size:12px">${stage.tag} · due ${fmtDate(due)} — ${stage.task}</span>`;
+    return taskRow(key, label, progress[key]?'checked':'');
+  }
+
+  function renderRevision(c){
+    const rows = allDayNums
+      .filter(n => progress['revdate:'+n] && revCurrentStage(n) !== null)
+      .map(n => ({ num:n, si: revCurrentStage(n), due: revDate(n, revCurrentStage(n)) }))
+      .sort((a,b)=> a.due - b.due);
+    const dueRows = rows.filter(r => revStatus(r.num) === 'due');
+    const upcomingRows = rows.filter(r => revStatus(r.num) === 'upcoming');
+
+    c.innerHTML = `
+      <p class="doccomment"><span class="kw">/**</span> revision.log — spaced revision, so nothing learned quietly fades <span class="kw">*/</span></p>
+      <div class="mindset-box">🧠 <span class="mindset-label">How this works:</span> once a day hits 100%, it enters a 5-step cycle — <b>+1</b> quick read, <b>+3</b> re-solve 1, <b>+7</b> re-solve 2 cold, <b>+15</b> explain + re-solve, <b>+30</b> final timed check. Checking a step off reveals the next one's due date — here, and on that day's own page. Days finished late in the plan get these gaps auto-compressed so every topic's full cycle still finishes on or right around Day 90 — no topic is left half-revised when you walk into the interview.</div>
+
+      <h3 class="section-h"><span class="sl">//</span> due now ${dueRows.length?`<span style="color:var(--text-dim);font-weight:400">(${dueRows.length})</span>`:''}</h3>
+      ${dueRows.length ? `<div id="dueList">${dueRows.map(r=>revRow(r.num,r.si)).join('')}</div>` : `<p class="day-comment">// nothing due today — clear.</p>`}
+
+      <h3 class="section-h"><span class="sl">//</span> upcoming</h3>
+      ${upcomingRows.length ? `<div id="upList">${upcomingRows.map(r=>revRow(r.num,r.si)).join('')}</div>` : `<p class="day-comment">// nothing upcoming yet — complete a day to start its cycle.</p>`}
+    `;
+    bindTasks(c, ()=>{ pulseStats(); renderTree(); renderContent(); });
+  }
+
+  function bindTasks(scope, after){
+    scope.querySelectorAll('.task-check').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        progress[cb.id] = cb.checked;
+        saveProgress();
+        if (cb.checked) bumpStreak();
+        after && after();
+      });
+    });
+  }
+
+  // ---------------- tree ----------------
+  function treeRow({indent, icon, label, pct, active, hasChildren, open, onClick, onCaret, pinned}){
+    const row = document.createElement('div');
+    row.className = 'node-row indent-'+indent + (active?' active':'') + (pinned?' pinned':'');
+    row.innerHTML = `
+      <span class="caret ${hasChildren?(open?'open':''):'leaf'}">${hasChildren?'▶':''}</span>
+      <span class="node-icon ${icon==='✓'?'icon-check':'icon-ring'}">${icon}</span>
+      <span class="node-label">${label}</span>
+      ${pct!==undefined?`<span class="node-pct">${pct}%</span>`:''}
+    `;
+    row.onclick = (e) => { if (hasChildren && (e.target.classList.contains('caret') || !onClick)) { onCaret && onCaret(); } else { onClick && onClick(); } };
+    return row;
+  }
+
+  let expanded = { month_1:true, week_1:true, reference:false };
+
+  function renderTree(){
+    const tree = document.getElementById('tree'); tree.innerHTML = '';
+
+    tree.appendChild(treeRow({ indent:0, icon:'📊', label:'dashboard', active: currentView==='dashboard', pinned:true, onClick: ()=>openView('dashboard') }));
+    const setupPct = setupDone()?100:0;
+    tree.appendChild(treeRow({ indent:0, icon: setupPct===100?'✓':'○', label:'setup.sh', pct:setupPct, active: currentView==='setup', onClick: ()=>openView('setup') }));
+    const dueCount = dueRevisionsToday().length;
+    tree.appendChild(treeRow({ indent:0, icon:'🔁', label:'revision.log'+(dueCount?` <span class="dim">(${dueCount} due)</span>`:''), active: currentView==='revision', onClick: ()=>openView('revision') }));
+
+    months.forEach(m=>{
+      const mOpen = !!expanded[m.id];
+      tree.appendChild(treeRow({ indent:0, icon:'', label:`<span class="dim">${m.id}</span> ${m.label}`, hasChildren:true, open:mOpen, onCaret:()=>{ expanded[m.id]=!mOpen; renderTree(); } }));
+      if (mOpen) {
+        m.weeks.forEach(wk=>{
+          const campName = camps[wk-1].name;
+          const wkKey = 'week_'+wk;
+          const wOpen = !!expanded[wkKey];
+          const wdays = camps[wk-1].days.map(d=>d[0]);
+          tree.appendChild(treeRow({ indent:1, icon:'', label:`<span class="dim">week_${String(wk).padStart(2,'0')}</span> ${campName}`, hasChildren:true, open:wOpen, onCaret:()=>{ expanded[wkKey]=!wOpen; renderTree(); } }));
+          if (wOpen) {
+            wdays.forEach(dn=>{
+              const pct = dayPct(dn);
+              tree.appendChild(treeRow({ indent:2, icon: pct===100?'✓':'○', label:'day-'+String(dn).padStart(2,'0')+'.js', pct, active: currentView==='day-'+dn, onClick: ()=>openView('day-'+dn) }));
+            });
+          }
+        });
+      }
+    });
+
+    const refOpen = !!expanded.reference;
+    tree.appendChild(treeRow({ indent:0, icon:'', label:'reference', hasChildren:true, open:refOpen, onCaret:()=>{ expanded.reference=!refOpen; renderTree(); } }));
+    if (refOpen) {
+      const phonePct = Math.round(phoneDone()/phoneSteps.length*100);
+      tree.appendChild(treeRow({ indent:1, icon: phonePct===100?'✓':'○', label:'phone_cleanup.sh', pct:phonePct, active: currentView==='phone', onClick: ()=>openView('phone') }));
+      tree.appendChild(treeRow({ indent:1, icon:'§', label:'consistency.log', active: currentView==='consistency', onClick: ()=>openView('consistency') }));
+      tree.appendChild(treeRow({ indent:1, icon:'§', label:'interview_checklist.md', active: currentView==='checklist', onClick: ()=>openView('checklist') }));
+      tree.appendChild(treeRow({ indent:1, icon:'§', label:'resources.md', active: currentView==='resources', onClick: ()=>openView('resources') }));
+    }
+  }
+
+  document.getElementById('menuBtn').onclick = () => document.getElementById('sidebar').classList.toggle('open');
+
+  renderTree();
+  openView('dashboard');
+})();
+</script>
+</body>
+</html>
